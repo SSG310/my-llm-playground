@@ -69,6 +69,13 @@ while True:
         print("Goodbye!!")
         break
 
+    if user_input.lower() == "clear":
+        conversation_history.clear()
+        if Path(HISTORY_FILE).exists():
+            os.remove(HISTORY_FILE)
+        print("Memory cleared. Fresh start!\n")
+        continue
+
     conversation_history.append({
         "role": "user",
         "content": user_input,  
