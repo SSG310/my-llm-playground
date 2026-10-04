@@ -82,19 +82,27 @@ while True:
     })
 
     try:
-        response  = client.chat.completions.create(
+        stream = client.chat.completions.create(
             model = "openai/gpt-oss-120b", 
             messages = [SYSTEM_PROMPT] + conversation_history,
+            stream = True,
         )
 
-        reply = response.choices[0].message.content
+        print("Mistra: ", end="", flush=True)
+        reply = ""
+
+        for chunk in stream:
+            token = chunk.choices[0].delta.content or ""
+            print(token, end="", flush=True)
+            reply += token
+
+        print("\n")
 
         conversation_history.append({
             "role": "assistant",
             "content":reply,
         })
 
-        print(f"Bot: {reply}\n")
     except Exception as e:
         print(f"Oops!, something went wrong : {e}\n")
         conversation_history.pop() # removes ghost message
