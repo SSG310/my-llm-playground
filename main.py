@@ -74,16 +74,21 @@ while True:
         "content": user_input,  
     })
 
-    response  = client.chat.completions.create(
-        model = "openai/gpt-oss-120b", 
-        messages = [SYSTEM_PROMPT] + conversation_history,
-)
+    try:
+        response  = client.chat.completions.create(
+            model = "openai/gpt-oss-120b", 
+            messages = [SYSTEM_PROMPT] + conversation_history,
+        )
 
-    reply = response.choices[0].message.content
+        reply = response.choices[0].message.content
 
-    conversation_history.append({
-        "role": "assistant",
-        "content":reply,
-    })
+        conversation_history.append({
+            "role": "assistant",
+            "content":reply,
+        })
 
-    print(f"Bot: {reply}\n")
+        print(f"Bot: {reply}\n")
+    except Exception as e:
+        print(f"Oops!, something went wrong : {e}\n")
+        conversation_history.pop() # removes ghost message
+        continue
