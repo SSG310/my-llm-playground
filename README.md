@@ -40,7 +40,7 @@ Mitra is friendly, a little Desi, and remembers your conversations across sessio
 
 3. Install dependencies
 ```bash
-   pip install openai python-dotenv
+   pip install -r requirements.txt
 ```
 
 4. Add your Groq API key
