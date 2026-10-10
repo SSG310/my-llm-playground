@@ -4,21 +4,13 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from pathlib import Path
 
-HISTORY_FILE ="history.json"
+load_dotenv()
 
-def save_history(history):
-    with open(HISTORY_FILE,"w") as f:
-        json.dump(history,f)
-
-def load_history():
-    if Path(HISTORY_FILE).exists():
-        with open(HISTORY_FILE, "r") as f:
-            return json.load(f)
-    return[]
-
-SYSTEM_PROMPT = {
-    "role": "system",
-    "content": """
+class Mitra:
+    HISTORY_FILE ="history.json"
+    SYSTEM_PROMPT = {
+        "role": "system",
+        "content": """
 You are Mitra, a friendly and smart Desi AI companion.
 
 LANGUAGE RULES:
@@ -50,60 +42,71 @@ STYLE:
 
 You are Mitra — thoda smart, thoda Desi, always helpful.
 """
-}
+    }
 
-load_dotenv()
-
-client = OpenAI(
-    api_key = os.getenv("GROQ_API_KEY"), 
-    base_url = "https://api.groq.com/openai/v1",
-)
-
-conversation_history = load_history() # memory
-
-while True:
-    user_input = input("You: ")
-
-    if user_input.lower() == "exit":
-        save_history(conversation_history)
-        print("Goodbye!!")
-        break
-
-    if user_input.lower() == "clear":
-        conversation_history.clear()
-        if Path(HISTORY_FILE).exists():
-            os.remove(HISTORY_FILE)
-        print("Memory cleared. Fresh start!\n")
-        continue
-
-    conversation_history.append({
-        "role": "user",
-        "content": user_input,  
-    })
-
-    try:
-        stream = client.chat.completions.create(
-            model = "openai/gpt-oss-120b", 
-            messages = [SYSTEM_PROMPT] + conversation_history,
-            stream = True,
+    def __init__(self):
+        self.client = OpenAI(
+            api_key = os.getenv("GROQ_API_KEY"),
+            base_url = "https://api.groq.com/openai/v1",
         )
+        self.conversation_history = self.load_history()
 
-        print("Mistra: ", end="", flush=True)
-        reply = ""
+    def load_history(self):
+        if Path(self.HISTORY_FILE).exists():
+            with open(self.HISTORY_FILE, "r") as f:
+                return json.load(f)
+        return[]
 
-        for chunk in stream:
-            token = chunk.choices[0].delta.content or ""
-            print(token, end="", flush=True)
-            reply += token
+    def save_history(self):
+        with open(self.HISTORY_FILE,"w") as f:
+            json.dump(self.conversation_history,f)
 
-        print("\n")
+    def clear_memory(self):
+        self.conversation_history.clear()
+        if Path(self.HISTORY_FILE).exists():
+            os.remove(self.HISTORY_FILE)
+        print("Memory cleared. Fresh start!\n")
 
-        conversation_history.append({
-            "role": "assistant",
-            "content":reply,
+    def chat(self,user_input):
+        self.conversation_history.append({
+            "role":"user",
+            "content": user_input,
         })
+        try:
+            stream = self.client.chat.completions.create(
+                model = "openai/gpt-oss-120b", 
+                messages = [self.SYSTEM_PROMPT] + self.conversation_history,
+                stream = True,
+            )
+            print("Mitra: ", end="", flush=True)
+            reply = ""
+            for chunk in stream:
+                token = chunk.choices[0].delta.content or ""
+                print(token, end="", flush=True)
+                reply += token
+            print("\n")
+            self.conversation_history.append({
+                "role": "assistant",
+                "content":reply,
+            })
 
-    except Exception as e:
-        print(f"Oops!, something went wrong : {e}\n")
-        conversation_history.pop() # removes ghost message
-        continue
+        except Exception as e:
+            print(f"Oops!, something went wrong : {e}\n")
+            self.conversation_history.pop() # removes ghost message
+
+    def run(self):
+        print("Mitra is ready. Type 'exit' to quit or 'clear' to reset memory.\n")
+        while True:
+            user_input = input("You: ")
+            if user_input.lower() == "exit":
+                self.save_history()
+                print("Goodbye!!")
+                break
+            elif user_input.lower() == "clear":
+                self.clear_memory()
+                continue
+            self.chat(user_input)
+
+if __name__ == "__main__":
+    mitra = Mitra()
+    mitra.run()
